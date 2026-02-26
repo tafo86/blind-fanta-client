@@ -1,0 +1,141 @@
+@import './base.css';
+
+#app {
+  margin: 0 auto;
+  padding: 2rem;
+  font-weight: normal;
+}
+
+
+@media (hover: hover) {
+  a:hover {
+    background-color: hsla(160, 100%, 37%, 0.2);
+  }
+}
+
+@media (min-width: 1024px) {
+
+  #app {
+    display: grid;
+    padding: 0;
+  }
+}
+
+
+/* Nascondi la lista di default */
+#player-ul  {
+  position:relative;
+  padding-left: 0px;
+  border: var(--bs-border-width) solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  max-height:300px;
+  overflow-y:auto;
+  z-index: 2;
+  background-color: white;
+}
+
+/* Stile per le opzioni */
+#player-ul li {
+  cursor: pointer;
+  padding-left:1em;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  padding-right: 0.5em;
+}
+
+#player-ul li:hover{
+  background-color: #3B71CA;
+  color:#FFFFFF;
+}
+
+.auction-canvas {
+  display: block;
+  transition: width 0.3s ease; /* Smooth resizing effect */
+}
+
+/* STATE 1: The Timer (Countdown) */
+/* Force the visual display to match the internal resolution */
+.canvas-timer {
+  width: 1000px;
+  height: 300px; 
+  max-width: 100%; /* Prevents overflow on mobile screens */
+}
+
+/* STATE 2: The Result */
+/* Allow it to grow to the larger size set by the worker (1000px) */
+.canvas-result {
+  width: 1000px;
+  height: 300px; 
+  max-width: 100%;
+}
+
+:root {
+  --color-goalkeeper: #f39c12;
+  --color-defender: #27ae60;
+  --color-midfielder: #2980b9;
+  --color-striker: #c0392b;
+}
+
+.badge-goalkeeper {
+  background-color: var(--color-goalkeeper);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.badge-defender {
+  background-color: var(--color-defender);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.badge-midfielder {
+  background-color: var(--color-midfielder);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.badge-striker {
+  background-color: var(--color-striker);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+#team li {
+ margin-bottom: 4px;
+ border: none;
+ border-radius: 6px;
+}
+
+.header {
+  /* Using a responsive unit (percentage of viewport width) */
+  margin-top: 1vw; 
+  margin-bottom: 2vw; 
+}
+
+.player-img {
+  /* Using a responsive unit (percentage of viewport width) */
+  height: 200px;
+  width: auto; 
+}
+
+#player-info {
+  border: #1f7ab6,solid;
+  border-width: 3px;
+  border-radius: 25px;
+  padding: 10px 10px 0px 10px;
+  background-color: #e4e4e2;
+}
+
+#player-info li {
+ background-color: rgba(0,0,0,0);
+ border-color: rgb(83, 119, 119);
+}
+
+#player-info li div{
+ font-weight: 500;
+}
+
+#player-info li div span{
+  font-weight: 500;
+  color: rgb(80,80,80);
+}

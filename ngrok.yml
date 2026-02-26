@@ -1,0 +1,15 @@
+version: 3
+agent:
+  authtoken: 37YhHqaQt0wH4fpIzwpbXO99tJR_3kTaeow2cLUA5ggLoknQj
+
+endpoints:
+  # - name: backend
+  #   url: https://germinatively-noncongratulatory-nancy.ngrok-free.dev
+  #   upstream: 
+  #     url: http://localhost:8000
+
+  - name: frontend
+    url: https://
+    # Note: No 'url' key here triggers a random ngrok-free.app domain
+    upstream:
+      url: http://localhost:5173
