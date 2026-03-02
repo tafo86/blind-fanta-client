@@ -251,12 +251,6 @@ const getPlayerImage = (url) => `https://content.fantacalcio.it${url}?v=420`;
                 {{ currentPlayer ? `Fai la tua offerta per ${currentPlayer.name}` : "Attendere la scelta del giocatore"
                 }}
             </h2>
-            system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans"
-            <h2 class="fw-bold mb-4" style="font-family: system-ui;">
-                {{ currentPlayer ? `Fai la tua offerta per ${currentPlayer.name}` : "Attendere la scelta del giocatore"
-                }}
-            </h2>
-
             <div v-if="currentPlayer" class="card border-0 mb-4">
                 <div class="card-body auction-card-body card-box-shadow">
 
