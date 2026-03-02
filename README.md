@@ -1,6 +1,6 @@
-# blind-fanta
+# blind-fanta-client
 
-This template should help get you started developing with Vue 3 in Vite.
+An app to manage a fanta with a sealed-bid auction
 
 ## Recommended IDE Setup
 
