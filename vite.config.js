@@ -23,20 +23,6 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       strictPort: true,
 
-      // 2. Wildcards allow local and any ngrok domain to connect
-      allowedHosts: [
-        "localhost",
-        "127.0.0.1",
-        ".ngrok-free.dev",
-        ".ngrok-free.app",
-      ],
-
-      // 3. Smart HMR: Detects if it needs to use SSL port 443
-      hmr: {
-        // If we're on ngrok (production or manual flag), use 443. Otherwise use default 5173.
-        clientPort: mode === "production" || env.NGROK_RUNNING === "true" ? 443 : 5173,
-      },
-
       // 4. WebSocket Proxy Bridge
       proxy: {
         "/ws-api": {
