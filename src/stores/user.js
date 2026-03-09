@@ -23,7 +23,6 @@ export function useUser() {
     const userData = {
       ...user, // All original properties (id, email, budget)
       messages: [], // Ensure this is an empty reactive array
-      isAdmin: user.email === "admin@gmail.com", // Set the boolean
     };
     currentUser.value = userData;
     console.log(userData)
