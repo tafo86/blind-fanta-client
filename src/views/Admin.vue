@@ -159,6 +159,7 @@ onMounted(() => {
             class="form-control" 
             v-model="playerInputText" 
             @focus="handleInputFocus"
+            @click="handleInputFocus"
             @blur="handleBlur" 
             required 
             autocomplete="off"
