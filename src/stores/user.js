@@ -1,6 +1,5 @@
 import { readonly, ref } from "vue";
 import axios from "axios";
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 let userSocket = ref(null);
 let reconnectIntervalSeconds = 2;
 const currentUser = ref(null);
@@ -14,9 +13,12 @@ const players_by_role = ref({
   strikers: [],
 });
 
+const BACKEND_URL = `${import.meta.env.VITE_HTTP_PROTOCOL}://${import.meta.env.VITE_BACKEND_SERVER}`;
+
 export function useUser() {
   const setCurrentUser = (user) => {
     if (!user) return;
+    console.log(user);
     // 1. Prepare the complete data object first
     const userData = {
       ...user, // All original properties (id, email, budget)
@@ -24,6 +26,7 @@ export function useUser() {
       isAdmin: user.email === "admin@gmail.com", // Set the boolean
     };
     currentUser.value = userData;
+    console.log(userData)
     setupSocket(user.id);
   };
 
@@ -75,7 +78,7 @@ export function useUser() {
 
         // 4. Get the Players for that specific Team ID
         const playersRes = await axios.get(
-          `${BACKEND_URL}/team/${userTeam.value.id}/players`,
+          `${BACKEND_URL}}/team/${userTeam.value.id}/players`,
         );
 
         if (playersRes.status === 200) {
@@ -104,15 +107,18 @@ export function useUser() {
 }
 
 const setupSocket = (userId) => {
-  // 1. Detect if we are on https (ngrok) or http (localhost)
-  const isSecure = window.location.protocol === "https:";
-  const protocol = isSecure ? "wss:" : "ws:";
-
-  // 2. Use the current host (localhost:5173 or ngrok-url)
-  const host = window.location.host;
-
-  // 3. Connect to the PROXY path (/ws-api)
-  const socketUrl = `${protocol}//${host}/ws-api/admin/ws/${userId}`;
+  let socketUrl = "";
+  if (import.meta.env.PROD) {
+    // We are live on Vercel! Connect directly to the Render backend.
+    // Notice we use wss:// for the secure connection.
+    socketUrl = `wss://blind-fanta-server.onrender.com/admin/ws/${userId}`;
+  } else {
+    // We are local! Use the Vite proxy trick.
+    const isSecure = window.location.protocol === "https:";
+    const protocol = isSecure ? "wss:" : "ws:";
+    const host = window.location.host;
+    socketUrl = `${protocol}//${host}/ws-api/admin/ws/${userId}`;
+  }
 
   console.log("Connecting to:", socketUrl);
 

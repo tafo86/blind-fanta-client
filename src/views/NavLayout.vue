@@ -7,6 +7,7 @@ const budget = ref(null)
 const isAuctionInProgress = ref(false)
 const { currentUser, setCurrentUser, clearUser } = useUser();
 const { loginWithRedirect, isAuthenticated, user, logout } = useAuth0();
+const BACKEND_URL = `${import.meta.env.VITE_HTTP_PROTOCOL}://${import.meta.env.VITE_BACKEND_SERVER}`
 
 
 // onBeforeMount(() => {
@@ -43,8 +44,10 @@ watch([isAuthenticated, user], async ([loggedIn, userAuthData]) => {
       console.log("Syncing user to database:", userAuthData.sub);
       try {
         if (userAuthData.sub) {
-          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/user/${userAuthData.sub}`);
+          const response = await fetch(`${BACKEND_URL}/user/${userAuthData.sub}`);
           const userData = await response.json();
+          const role = userAuthData['https://blind-fanta/roles'] || []
+          userData.isAdmin = role[0] ===  'admin'
           setCurrentUser(userData)
         }
       } catch (error) {
@@ -73,7 +76,7 @@ watch([isAuthenticated, user], async ([loggedIn, userAuthData]) => {
           <li class="nav-item me-3">
             <router-link to="/auction" class="nav-link">Asta</router-link>
           </li>
-          <li class="nav-item me-3">
+          <li v-if="currentUser?.isAdmin" class="nav-item me-3">
             <router-link to="/admin" class="nav-link">Admin</router-link>
           </li>
         </ul>

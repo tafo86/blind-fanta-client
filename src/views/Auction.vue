@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, useTemplateRef, watch, nextTick, computed, onUnmounted } from 'vue'
-import { useUser, authenticatedUser } from '@/stores/user';
+import { useUser } from '@/stores/user';
 import { useAuctionStatus } from '@/stores/auctionStatus';
 import axios from 'axios'
 import confetti from 'canvas-confetti';
@@ -13,11 +13,10 @@ import noOfferImg from '../assets/no-offer.png'
 
 
 // --- Stores ---
-const { currentUser, setCurrentUser } = useUser();
+const { currentUser } = useUser();
 const { currentPlayer, setCurrentPlayer, auctionStatus, setAuctionStatus, updateAuctionBestOffer } = useAuctionStatus();
 
 // --- Constants ---
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const ROLE_MAP = {
     'P': 'Portiere',
     'D': 'Difensore',
@@ -39,6 +38,8 @@ const canvasTimerRef = useTemplateRef("timer-canvas");
 const offerInputRef = useTemplateRef("offer-input");
 
 const emit = defineEmits(['auctionStarted', 'auctionClosed'])
+
+const BACKEND_URL = `${import.meta.env.VITE_HTTP_PROTOCOL}://${import.meta.env.VITE_BACKEND_SERVER}`
 
 // --- Computed ---
 const minAllowedOffer = computed(() => {
@@ -226,7 +227,6 @@ const resetStateForNewAuction = async () => {
 
 // --- Lifecycle ---
 onMounted(() => {
-    setCurrentUser(authenticatedUser)
     if (!offscreenCanvas && canvasTimerRef.value?.transferControlToOffscreen) {
         offscreenCanvas = canvasTimerRef.value.transferControlToOffscreen();
         worker.postMessage({ type: 'init', offscreenCanvas }, [offscreenCanvas]);

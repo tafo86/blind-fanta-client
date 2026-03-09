@@ -2,13 +2,12 @@
 import { ref, onMounted, watch } from 'vue'
 import { useUser } from '@/stores/user';
 import axios from 'axios'
-const { currentUser, userSocket } = useUser();
+const { currentUser } = useUser();
 import { useAuctionStatus } from '@/stores/auctionStatus';
 const { currentPlayer, auctionStatus, setAuctionStatus } = useAuctionStatus();
 let endAuction = ref(false)
 const emit = defineEmits(['secondRoundEvent', 'auctionEnded', 'auctionStarted'])
-let offscreenCanvas
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+const BACKEND_URL = `${import.meta.env.VITE_HTTP_PROTOCOL}://${import.meta.env.VITE_BACKEND_SERVER}`
 const canvasRef = ref(null);
 
 defineOptions({

@@ -1,11 +1,11 @@
 <script setup>
 import { ref, useTemplateRef, onMounted, nextTick, watch, computed } from 'vue'
-import { useUser, adminUser } from '@/stores/user';
+import { useUser } from '@/stores/user';
 import axios from 'axios'
 import { Modal } from 'bootstrap'
 
 // --- Store ---
-const { currentUser, setCurrentUser } = useUser();
+const { currentUser } = useUser();
 
 // --- Reactive State ---
 const playerList = ref([])
@@ -20,7 +20,7 @@ const isClickable = ref(true)
 // --- Refs ---
 const playerFormRef = useTemplateRef('player-form')
 let noEligiblePlayerModal = null
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+const BACKEND_URL = `${import.meta.env.VITE_HTTP_PROTOCOL}://${import.meta.env.VITE_BACKEND_SERVER}`
 
 // --- Computed Properties ---
 // 1. Efficient Filtering: Updates automatically when input or checkboxes change
@@ -124,7 +124,6 @@ const handleBlur = () => {
 
 // --- Lifecycle ---
 onMounted(() => {
-  setCurrentUser(adminUser);
   axios.get(`${BACKEND_URL}/players`)
     .then(response => playerList.value = response.data)
     .catch(error => console.error(error));

@@ -6,7 +6,7 @@ import { onMounted, ref, useTemplateRef, watch } from 'vue';
 
 // --- Store & Config ---
 const { currentUser, team: storeTeam, players_by_role, noTeam, fetchTeamData } = useUser()
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+const BACKEND_URL = `${import.meta.env.VITE_HTTP_PROTOCOL}://${import.meta.env.VITE_BACKEND_SERVER}`
 
 // --- Local State ---
 const teamNameInput = ref("")
