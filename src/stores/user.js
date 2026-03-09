@@ -78,7 +78,7 @@ export function useUser() {
 
         // 4. Get the Players for that specific Team ID
         const playersRes = await axios.get(
-          `${BACKEND_URL}}/team/${userTeam.value.id}/players`,
+          `${BACKEND_URL}/team/${userTeam.value.id}/players`,
         );
 
         if (playersRes.status === 200) {
@@ -111,7 +111,7 @@ const setupSocket = (userId) => {
   if (import.meta.env.PROD) {
     // We are live on Vercel! Connect directly to the Render backend.
     // Notice we use wss:// for the secure connection.
-    socketUrl = `wss://blind-fanta-server.onrender.com/admin/ws/${userId}`;
+    socketUrl = `wss://${import.meta.env.VITE_BACKEND_SERVER}/${userId}`;
   } else {
     // We are local! Use the Vite proxy trick.
     const isSecure = window.location.protocol === "https:";
