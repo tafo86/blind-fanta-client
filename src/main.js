@@ -12,9 +12,12 @@ const app = createApp(App).use(router);
 export const auth0 = createAuth0({
   domain: import.meta.env.VITE_AUTH0_DOMAIN,
   clientId: import.meta.env.VITE_AUTH0_CLIENT_ID,
+  // ADD THIS LINE: It saves the token in the browser storage!
+  cacheLocation: 'localstorage',
   authorizationParams: {
     redirect_uri: window.location.origin,
     scope: "openid profile email",
+    audience: import.meta.env.VITE_AUTH0_AUDIENCE // <-- This asks for the JWT!
   },
   onRedirectCallback: async (appState) => {
     // This line is what actually takes the user from the

@@ -1,11 +1,11 @@
 <script setup>
-import { ref, useTemplateRef, onMounted, nextTick, watch, computed } from 'vue'
 import { useUser } from '@/stores/user';
-import axios from 'axios'
-import { Modal } from 'bootstrap'
+import axios from 'axios';
+import { Modal } from 'bootstrap';
+import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
 
 // --- Store ---
-const { currentUser } = useUser();
+const { currentUser, defaultUserHeaders } = useUser();
 
 // --- Reactive State ---
 const playerList = ref([])
@@ -19,14 +19,15 @@ const isClickable = ref(true)
 
 // --- Refs ---
 const playerFormRef = useTemplateRef('player-form')
-let noEligiblePlayerModal = null
+const noEligiblePlayerModal = useTemplateRef('no-eligible-player-modal')
 const BACKEND_URL = `${import.meta.env.VITE_HTTP_PROTOCOL}://${import.meta.env.VITE_BACKEND_SERVER}`
+let bsModalInstance = null;
 
 // --- Computed Properties ---
 // 1. Efficient Filtering: Updates automatically when input or checkboxes change
 const filteredPlayers = computed(() => {
   const search = playerInputText.value.toLowerCase().trim();
-  
+
   return playerList.value.filter(p => {
     const nameMatch = p.name.toLowerCase().includes(search);
     const roleMatch = filterRole.value.includes(p.role);
@@ -37,7 +38,7 @@ const filteredPlayers = computed(() => {
 // 2. Button Text based on state
 const buttonLabel = computed(() => {
   if (!isClickable.value && isSending.value) return "Sending...";
-  else if(!isClickable.value && !isSending.value) return "Wait for the round to close";
+  else if (!isClickable.value && !isSending.value) return "Wait for the round to close";
   return isSecondRound.value ? "Start Second Round" : "Start Auction";
 });
 
@@ -73,23 +74,25 @@ const startAuction = async (event) => {
 
   try {
     isSending.value = true
-    const response = await axios.post(`${BACKEND_URL}${endpoint}`, selectedPlayerId.value, {
-      headers: { 'Content-Type': 'text/plain' }
-    });
+    const httpHeaders = JSON.parse(JSON.stringify(defaultUserHeaders.value));
+    httpHeaders["headers"]['Content-Type'] = 'text/plain'
+    const response = await axios.post(`${BACKEND_URL}${endpoint}`, selectedPlayerId.value,
+      httpHeaders
+    );
     isSending.value = false
     if (response.status === 200) {
       // Logic: If standard auction, check eligibility
       if (!isSecondRound.value && !response.data.eligible) {
-        noEligiblePlayerModal.show();
+        if (bsModalInstance) bsModalInstance.show();
         isClickable.value = true;
       } else {
         // Success: Disable button briefly or handle UI state
-        
+
       }
     }
   } catch (error) {
     console.error("Auction Error:", error);
-  } 
+  }
 }
 //TODO controllare attivazione e disattivazione bottoni
 // --- Watcher ---
@@ -115,6 +118,31 @@ watch(
   { deep: true }
 );
 
+// 1. Extract the fetch logic into a single, clean function
+const fetchPlayers = async () => {
+  // Safety check: If the token isn't ready yet, abort and wait.
+  if (!defaultUserHeaders.value) return;
+
+  try {
+    const response = await axios.get(`${BACKEND_URL}/player/players`, defaultUserHeaders.value);
+    playerList.value = response.data;
+  } catch (error) {
+    console.error("❌ Failed to fetch players:", error);
+  }
+};
+
+watch(
+  currentUser,
+  async () => {
+    if (currentUser.value) {
+      fetchPlayers();
+    }
+  },
+  // THE MAGIC FIX: This tells Vue to run this check the second the component loads, 
+  // completely replacing the need for an onMounted fetch!
+  { immediate: true }
+);
+
 const handleBlur = () => {
   // We need window.setTimeout or just setTimeout (it works inside script)
   setTimeout(() => {
@@ -123,12 +151,10 @@ const handleBlur = () => {
 }
 
 // --- Lifecycle ---
-onMounted(() => {
-  axios.get(`${BACKEND_URL}/players`)
-    .then(response => playerList.value = response.data)
-    .catch(error => console.error(error));
-
-  noEligiblePlayerModal = Modal.getOrCreateInstance('#no-eligible-player-modal');
+onMounted(async () => {
+  if (noEligiblePlayerModal.value) {
+    bsModalInstance = new Modal(noEligiblePlayerModal.value);
+  } 
 });
 </script>
 
@@ -136,12 +162,13 @@ onMounted(() => {
   <div class="col-5">
     <div class="mt-3 text-center">
       <h2 class="fw-bold text-primary-emphasis header">Player</h2>
-      
+
       <div class="d-flex bg-dark text-light rounded mb-2 ps-2">
         <div class="form-check me-2" v-for="role in ['P', 'D', 'C', 'A']" :key="role">
           <input class="form-check-input" type="checkbox" :value="role" :id="role" v-model="filterRole">
           <label class="form-check-label" :for="role">
-            {{ role === 'P' ? 'Portiere' : role === 'D' ? 'Difensori' : role === 'C' ? 'Centrocampisti' : 'Attaccanti' }}
+            {{ role === 'P' ? 'Portiere' : role === 'D' ? 'Difensori' : role === 'C' ? 'Centrocampisti' : 'Attaccanti'
+            }}
           </label>
         </div>
         <div class="form-check me-2">
@@ -151,47 +178,29 @@ onMounted(() => {
       </div>
 
       <form @submit.prevent="startAuction" novalidate ref="player-form">
-        
+
         <div data-mdb-input-init class="form-outline position-relative">
-          <input 
-            type="text" 
-            id="player-input" 
-            class="form-control" 
-            v-model="playerInputText" 
-            @focus="handleInputFocus"
-            @click="handleInputFocus"
-            @blur="handleBlur" 
-            required 
-            autocomplete="off"
-            placeholder="Search player..."
-          />
-          
-          <ul v-if="showListFlag && filteredPlayers.length > 0" 
-              class="list-group position-absolute w-100" 
-              style="z-index: 1000; max-height: 300px; overflow-y: auto;">
-            <li 
-              v-for="player in filteredPlayers" 
-              :key="player.id"
-              class="list-group-item list-group-item-action cursor-pointer" 
-              @mousedown.prevent="selectPlayer(player)">
+          <input type="text" id="player-input" class="form-control" v-model="playerInputText" @focus="handleInputFocus"
+            @click="handleInputFocus" @blur="handleBlur" required autocomplete="off" placeholder="Search player..." />
+
+          <ul v-if="showListFlag && filteredPlayers.length > 0" class="list-group position-absolute w-100"
+            style="z-index: 1000; max-height: 300px; overflow-y: auto;">
+            <li v-for="player in filteredPlayers" :key="player.id"
+              class="list-group-item list-group-item-action cursor-pointer" @mousedown.prevent="selectPlayer(player)">
               {{ player.name }} ({{ player.role }}) - {{ player.real_team }}
             </li>
           </ul>
         </div>
 
         <div class="d-grid mt-4">
-          <button 
-            type="submit" 
-            class="btn btn-primary mb-4" 
-            :disabled="!isClickable"
+          <button type="submit" class="btn btn-primary mb-4" :disabled="!isClickable"
             :class="{ 'btn-warning': isSecondRound }">
             {{ buttonLabel }}
           </button>
         </div>
-
       </form>
 
-      <div class="modal" tabindex="-1" id="no-eligible-player-modal">
+      <div class="modal" tabindex="-1" ref="no-eligible-player-modal">
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header bg-warning">

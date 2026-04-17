@@ -1,10 +1,12 @@
-import { readonly, ref } from "vue";
 import axios from "axios";
+import { readonly, ref } from "vue";
 let userSocket = ref(null);
 let reconnectIntervalSeconds = 2;
 const currentUser = ref(null);
 const userTeam = ref(null);
 const noTeam = ref(false);
+const token = ref(null);
+const userHeaders = ref(null);
 
 const players_by_role = ref({
   goalkeepers: [],
@@ -25,7 +27,7 @@ export function useUser() {
       messages: [], // Ensure this is an empty reactive array
     };
     currentUser.value = userData;
-    console.log(userData)
+    console.log(userData);
     setupSocket(user.id);
   };
 
@@ -69,6 +71,7 @@ export function useUser() {
       // 3. Get the Team by User ID
       const teamRes = await axios.get(
         `${BACKEND_URL}/team/user/${currentUser.value.id}`,
+        userHeaders.value,
       );
 
       if (teamRes.status === 200 && teamRes.data?.id) {
@@ -78,6 +81,7 @@ export function useUser() {
         // 4. Get the Players for that specific Team ID
         const playersRes = await axios.get(
           `${BACKEND_URL}/team/${userTeam.value.id}/players`,
+          userHeaders.value,
         );
 
         if (playersRes.status === 200) {
@@ -93,12 +97,24 @@ export function useUser() {
     }
   };
 
+  const setUserToken = (bearerToken) => {
+    console.log(bearerToken);
+    token.value = bearerToken;
+    userHeaders.value = {headers: {"Authorization": `Bearer ${token?.value}`}};
+  };
+
+  // const defaultUserHeaders = () => {
+  //   return userHeaders.value;
+  // };
+
   return {
     currentUser, // This is the ref itself
     team: readonly(userTeam),
     noTeam: readonly(noTeam),
     players_by_role: readonly(players_by_role),
     userSocket: readonly(userSocket), // Now the component can see the socket
+    setUserToken,
+    defaultUserHeaders: userHeaders,
     setCurrentUser,
     clearUser,
     fetchTeamData,
@@ -110,13 +126,13 @@ const setupSocket = (userId) => {
   if (import.meta.env.PROD) {
     // We are live on Vercel! Connect directly to the Render backend.
     // Notice we use wss:// for the secure connection.
-    socketUrl = `wss://${import.meta.env.VITE_BACKEND_SERVER}/${userId}`;
+    socketUrl = `wss://${import.meta.env.VITE_BACKEND_SERVER}/${userId}?token=${token.value}`;
   } else {
     // We are local! Use the Vite proxy trick.
     const isSecure = window.location.protocol === "https:";
     const protocol = isSecure ? "wss:" : "ws:";
     const host = window.location.host;
-    socketUrl = `${protocol}//${host}/ws-api/admin/ws/${userId}`;
+    socketUrl = `${protocol}//${host}/ws-api/admin/ws/${userId}?token=${token.value}`;
   }
 
   console.log("Connecting to:", socketUrl);

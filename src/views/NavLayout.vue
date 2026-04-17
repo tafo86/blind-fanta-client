@@ -5,23 +5,15 @@ import { ref, watch } from 'vue';
 // added only for not view warning
 const budget = ref(null)
 const isAuctionInProgress = ref(false)
-const { currentUser, setCurrentUser, clearUser } = useUser();
-const { loginWithRedirect, isAuthenticated, user, logout } = useAuth0();
+const { currentUser, setCurrentUser, clearUser, setUserToken, getDefaultHttpRequestHeaders: defaultUserHeaders } = useUser();
+const { loginWithRedirect, isAuthenticated, user, logout, getAccessTokenSilently } = useAuth0();
 const BACKEND_URL = `${import.meta.env.VITE_HTTP_PROTOCOL}://${import.meta.env.VITE_BACKEND_SERVER}`
-
-
-// onBeforeMount(() => {
-//   currentUser.value = getCurrentUser()
-//   console.log(user)
-//   // budget.value = currentUser.value.budget
-//   console.log("eeee")
-// })
 
 const updateBudget = function (newBudget) {
   budget.value = newBudget
 }
 
-const handleAutoLogin = () => {
+const handleAutoLogin = async () => {
   loginWithRedirect({
     appState: {
       // window.location.pathname captures the current route (e.g., /auction/12)
@@ -44,10 +36,12 @@ watch([isAuthenticated, user], async ([loggedIn, userAuthData]) => {
       console.log("Syncing user to database:", userAuthData.sub);
       try {
         if (userAuthData.sub) {
-          const response = await fetch(`${BACKEND_URL}/user/${userAuthData.sub}`);
+          const token = await getAccessTokenSilently();
+          setUserToken(token)
+          const response = await fetch(`${BACKEND_URL}/user/${userAuthData.sub}`, { headers: { "Authorization": `Bearer ${token}` } });
           const userData = await response.json();
-          const role = userAuthData['https://blind-fanta/roles'] || []
-          userData.isAdmin = role[0] ===  'admin'
+          const roles = userAuthData['https://blind-fanta/roles'] || []
+          userData.isAdmin = roles.includes('admin')
           setCurrentUser(userData)
         }
       } catch (error) {
@@ -55,7 +49,7 @@ watch([isAuthenticated, user], async ([loggedIn, userAuthData]) => {
       }
     }
   }
-})
+}, { immediate: true })
 
 </script>
 
@@ -102,7 +96,8 @@ watch([isAuthenticated, user], async ([loggedIn, userAuthData]) => {
     <div class="row justify-content-center">
       <router-view v-slot="{ Component }">
         <keep-alive :include="['Auction']">
-          <component v-if="Component" :is="Component" @auction-started="isAuctionInProgress=true" @auction-closed="isAuctionInProgress=false"/>
+          <component v-if="Component" :is="Component" @auction-started="isAuctionInProgress = true"
+            @auction-closed="isAuctionInProgress = false" />
         </keep-alive>
       </router-view>
     </div>

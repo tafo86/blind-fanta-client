@@ -1,19 +1,19 @@
 <script setup>
-import { ref, onMounted, useTemplateRef, watch, nextTick, computed, onUnmounted } from 'vue'
-import { useUser } from '@/stores/user';
 import { useAuctionStatus } from '@/stores/auctionStatus';
-import axios from 'axios'
+import { useUser } from '@/stores/user';
+import axios from 'axios';
 import confetti from 'canvas-confetti';
+import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 
-import winnerImg from '../assets/winner.png'
-import loserImg from '../assets/loser.png'
-import secondRoundImg from '../assets/second-round.png'
-import noOfferImg from '../assets/no-offer.png'
+import loserImg from '../assets/loser.png';
+import noOfferImg from '../assets/no-offer.png';
+import secondRoundImg from '../assets/second-round.png';
+import winnerImg from '../assets/winner.png';
 
 
 // --- Stores ---
-const { currentUser } = useUser();
+const { currentUser, defaultUserHeaders } = useUser();
 const { currentPlayer, setCurrentPlayer, auctionStatus, setAuctionStatus, updateAuctionBestOffer } = useAuctionStatus();
 
 // --- Constants ---
@@ -62,8 +62,11 @@ const resultData = ref({
     img: ""
 });
 
-
 const worker = new Worker(new URL('/src/views/TimerAnimation.js', import.meta.url), { type: 'module' });
+
+// --- Template Helpers ---
+const getRoleLabel = (role) => ROLE_MAP[role] || role;
+const getPlayerImage = (url) => `https://content.fantacalcio.it${url}?v=420`;
 
 // --- Worker Handler ---
 worker.onmessage = (e) => {
@@ -79,7 +82,7 @@ const handleTimeout = async () => {
         const response = await axios.post(`${BACKEND_URL}/offer/timeout`, {
             user_id: currentUser.value.id,
             player_id: currentPlayer.value.id
-        });
+        }, defaultUserHeaders.value);
 
         if (response.status === 200) {
             if (canvasTimerRef.value) canvasTimerRef.value.hidden = true;
@@ -140,9 +143,9 @@ watch(
         const raw = messages[messages.length - 1];
         const msg = typeof raw === 'string' ? JSON.parse(raw) : raw;
         showResultOverlay.value = false
-        if (msg.player) {
+        if (msg.hasOwnProperty('id')) {
             emit('auctionStarted')
-            handleNewPlayer(msg.player);
+            handleNewPlayer(msg);
         } else {
             handleSecondRoundUpdate(msg);
         }
@@ -196,7 +199,7 @@ const sendOffer = async () => {
             player_id: currentPlayer.value.id,
             amount: offerValue.value,
             user_id: currentUser.value.id
-        });
+        }, defaultUserHeaders.value);
 
         if (response.status === 200) {
             offerValue.value = null;
@@ -237,9 +240,6 @@ onUnmounted(() => {
     worker.terminate();
 });
 
-// --- Template Helpers ---
-const getRoleLabel = (role) => ROLE_MAP[role] || role;
-const getPlayerImage = (url) => `https://content.fantacalcio.it${url}?v=420`;
 
 </script>
 
@@ -254,9 +254,8 @@ const getPlayerImage = (url) => `https://content.fantacalcio.it${url}?v=420`;
             <div v-if="currentPlayer" class="card border-0 mb-4">
                 <div class="card-body auction-card-body card-box-shadow">
 
-                    <img class="player-img mb-3" :src="getPlayerImage(currentPlayer.img)" alt="Player Image"
+                    <img class="player-img mb-3" :src=currentPlayer.img alt="Player Image"
                         style="width: 150px; height: 150px; object-fit: contain; background: transparent; box-shadow: none;" />
-
                     <ul class="list-group list-group-flush mb-4">
                         <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center"
                             style="border-bottom: var(--bs-list-group-border-width) solid #cecece;">

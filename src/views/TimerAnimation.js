@@ -1,5 +1,5 @@
 // --- Configuration ---
-const COUNTDOWN_DURATION = 1000; // seconds
+const COUNTDOWN_DURATION = 10; // seconds
 const COUNTDOWN_DURATION_SECOND_ROUND = 10;
 const FONT_STYLE = 'bold 40px "Segoe UI", sans-serif';
 const TEXT_COLOR = "#0a58ca";
