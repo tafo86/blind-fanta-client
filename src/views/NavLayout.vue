@@ -22,35 +22,34 @@ const handleAutoLogin = async () => {
   });
 };
 
-
 const handleLogOut = () => {
   logout({ returnTo: window.location.origin })
   clearUser()
 }
 
 watch([isAuthenticated, user], async ([loggedIn, userAuthData]) => {
-  // The Auth0 Action has already finished by now
-  // So we just fetch the data from our own DB
-  if (loggedIn) {
-    if (userAuthData.sub) {
-      console.log("Syncing user to database:", userAuthData.sub);
-      try {
-        if (userAuthData.sub) {
-          const token = await getAccessTokenSilently();
-          setUserToken(token)
-          const response = await fetch(`${BACKEND_URL}/user/${userAuthData.sub}`, { headers: { "Authorization": `Bearer ${token}` } });
-          const userData = await response.json();
-          const roles = userAuthData['https://blind-fanta/roles'] || []
-          userData.isAdmin = roles.includes('admin')
-          setCurrentUser(userData)
-        }
-      } catch (error) {
-        console.error("❌ Sync failed:", error);
-      }
+  // 1. Check if logged in AND sub exists in one clean line
+  if (loggedIn && userAuthData?.sub) {
+    console.log("Syncing user to database:", userAuthData.sub);
+    try {
+      const token = await getAccessTokenSilently();
+      setUserToken(token);
+      
+      const response = await fetch(`${BACKEND_URL}/user/${userAuthData.sub}`, { 
+        headers: { "Authorization": `Bearer ${token}` } 
+      });
+      const userData = await response.json();
+      
+      const roles = userAuthData['https://blind-fanta/roles'] || [];
+      userData.isAdmin = roles.includes('admin');
+      
+      setCurrentUser(userData);
+
+    } catch (error) {
+      console.error("❌ Sync failed:", error);
     }
   }
-}, { immediate: true })
-
+}, { immediate: true });
 </script>
 
 
