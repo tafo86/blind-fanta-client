@@ -35,11 +35,5 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
   };
 });
