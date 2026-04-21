@@ -126,7 +126,7 @@ const setupSocket = (userId) => {
   if (import.meta.env.PROD) {
     // We are live on Vercel! Connect directly to the Render backend.
     // Notice we use wss:// for the secure connection.
-    socketUrl = `wss://${import.meta.env.VITE_BACKEND_SERVER}/${userId}?token=${token.value}`;
+    socketUrl = `wss://${import.meta.env.VITE_BACKEND_SERVER}/admin/ws/${userId}?token=${token.value}`;
   } else {
     // We are local! Use the Vite proxy trick.
     const isSecure = window.location.protocol === "https:";
