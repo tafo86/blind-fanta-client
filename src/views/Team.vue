@@ -4,6 +4,8 @@ import { useUser } from '@/stores/user';
 import axios from 'axios';
 import { onMounted, ref, useTemplateRef, watch } from 'vue';
 
+const isTeamLoading = ref(true);
+
 // --- Store & Config ---
 const { currentUser, team: storeTeam, players_by_role, noTeam, fetchTeamData, defaultUserHeaders } = useUser()
 const BACKEND_URL = `${import.meta.env.VITE_HTTP_PROTOCOL}://${import.meta.env.VITE_BACKEND_SERVER}`
@@ -12,6 +14,7 @@ const BACKEND_URL = `${import.meta.env.VITE_HTTP_PROTOCOL}://${import.meta.env.V
 const teamNameInput = ref("")
 const isSubmitting = ref(false)
 const teamFormRef = useTemplateRef("team-form")
+
 
 // --- Constants ---
 // Define the specific order for rendering rows
@@ -41,8 +44,10 @@ const getRoleLabel = (role) => ROLE_MAP[role] || role;
 
 
 // --- Lifecycle ---
-onMounted(() => {
-  fetchTeamData()
+onMounted(async () => {
+  isTeamLoading.value = true;
+  await fetchTeamData()
+  isTeamLoading.value = false;
 })
 
 // --- Actions ---
@@ -120,8 +125,14 @@ const closeModal = () => {
   <div class="team-container mt-3 text-center">
 
     <h2 class="fw-bold text-primary-emphasis mb-4">La tua formazione</h2>
-
-    <div v-if="noTeam" class="card shadow-sm p-4">
+    
+    <div v-if="isTeamLoading" class="d-flex justify-content-center mt-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Caricamento rosa...</span>
+      </div>
+    </div>
+    
+    <div v-else-if="noTeam" class="card shadow-sm p-4">
       <form @submit.prevent="createTeam" novalidate ref="team-form">
         <div class="form-outline mb-4">
           <label class="form-label fw-bold" for="name-input">Nome Squadra</label>
@@ -138,6 +149,10 @@ const closeModal = () => {
           </button>
         </div>
       </form>
+    </div>
+    
+    <div v-else-if="Object.values(players_by_role).flat().length === 0" class="alert alert-info mt-4">
+      La tua rosa è ancora vuota. Vai all'asta per acquistare giocatori!
     </div>
 
     <div v-else>
@@ -164,14 +179,13 @@ const closeModal = () => {
           </li>
         </ul>
       </div>
-      <div v-if="Object.values(players_by_role).flat().length === 0" class="alert alert-info mt-4">
-        La tua rosa è ancora vuota. Vai all'asta per acquistare giocatori!
-      </div>
+
       <div v-if="showModal" class="modal-backdrop-custom" @click.self="closeModal">
         <div class="card premium-laminate-card auction-card-body card-box-shadow border-0 overflow-hidden"
           style="width: 90%; max-width: 400px;" id="player-info-modal">
 
-          <div class="bg-gold position-relative d-flex justify-content-center pt-4 pb-3" style="background-color: #FFC000;">
+          <div class="bg-gold position-relative d-flex justify-content-center pt-4 pb-3"
+            style="background-color: #FFC000;">
 
             <button class="btn-close position-absolute top-0 end-0 m-3" @click="closeModal" aria-label="Close"></button>
 
@@ -260,7 +274,7 @@ const closeModal = () => {
 
 /* The Solid Gold Header */
 .bg-gold {
-  background-color: #FFD700; 
+  background-color: #FFD700;
 }
 
 /* The Pearly White Body */
@@ -277,24 +291,27 @@ const closeModal = () => {
 .premium-laminate-card::after {
   content: "";
   position: absolute;
-  top: 0; 
-  left: 0; 
-  width: 100%; 
+  top: 0;
+  left: 0;
+  width: 100%;
   height: 100%;
-  
-/* The New Gradient: Bright top, clear middle, subtle bottom */
-  background-image: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.4) 20%,  /* Strong reflection over the gold image section */
-    rgba(255, 255, 255, 0) 40%,    /* Fades to fully transparent before the text starts */
-    rgba(255, 255, 255, 0) 75%,    /* Stays fully transparent over the list items */
-    rgba(255, 255, 255, 0.15) 90%, /* A tiny, soft glint at the bottom right corner */
-    rgba(255, 255, 255, 0) 100%
-  );
-  
+
+  /* The New Gradient: Bright top, clear middle, subtle bottom */
+  background-image: linear-gradient(135deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.4) 20%,
+      /* Strong reflection over the gold image section */
+      rgba(255, 255, 255, 0) 40%,
+      /* Fades to fully transparent before the text starts */
+      rgba(255, 255, 255, 0) 75%,
+      /* Stays fully transparent over the list items */
+      rgba(255, 255, 255, 0.15) 90%,
+      /* A tiny, soft glint at the bottom right corner */
+      rgba(255, 255, 255, 0) 100%);
+
   /* CRITICAL: This allows the user to click "through" the gloss to hit the close button */
-  pointer-events: none; 
-  z-index: 5; /* Puts the shine over the backgrounds, but we kept the text/buttons higher */
+  pointer-events: none;
+  z-index: 5;
+  /* Puts the shine over the backgrounds, but we kept the text/buttons higher */
 }
 </style>
